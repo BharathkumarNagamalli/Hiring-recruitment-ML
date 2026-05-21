@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - HireML</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body style="background:#f0f4f8;">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background:#0d1b2a;">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-4" href="/">
+            <i class="fas fa-brain me-2 text-info"></i>HireML
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto gap-1">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/jobs">Jobs</a></li>
+                <li class="nav-item"><a class="nav-link" href="/recruiter">Recruiter</a></li>
+                <li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
+                <li class="nav-item"><a class="nav-link" href="/interview-prep">Interview Prep</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/dashboard">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/results">Results</a></li>
+                <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid py-4 px-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold text-navy mb-1">
+                <i class="fas fa-chart-bar me-2 text-info"></i>Recruitment Dashboard
+            </h2>
+            <p class="text-muted mb-0">Real-time ML-powered hiring analytics</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/api/download-shortlisted" class="btn btn-success fw-semibold">
+                <i class="fas fa-download me-2"></i>Export Shortlisted CSV
+            </a>
+            <button class="btn btn-outline-navy fw-semibold" onclick="retrainModel()">
+                <i class="fas fa-sync me-2"></i>Retrain ML Model
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-icon bg-info-subtle">
+                    <i class="fas fa-users text-info fa-lg"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">{{ total }}</div>
+                    <div class="kpi-label">Total Candidates</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-icon bg-success-subtle">
+                    <i class="fas fa-check-circle text-success fa-lg"></i>
+                </div>
+                <div>
+                    <div class="kpi-value text-success">{{ shortlisted }}</div>
+                    <div class="kpi-label">Selected</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-icon bg-danger-subtle">
+                    <i class="fas fa-times-circle text-danger fa-lg"></i>
+                </div>
+                <div>
+                    <div class="kpi-value text-danger">{{ rejected }}</div>
+                    <div class="kpi-label">Rejected</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-icon bg-warning-subtle">
+                    <i class="fas fa-star text-warning fa-lg"></i>
+                </div>
+                <div>
+                    <div class="kpi-value text-warning">{{ avg_score }}%</div>
+                    <div class="kpi-label">Avg Match Score</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h6 class="fw-bold text-navy mb-0">
+                        <i class="fas fa-bar-chart me-2 text-info"></i>Score Distribution
+                    </h6>
+                    <small class="text-muted">Candidates grouped by match score range</small>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <canvas id="scoreChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h6 class="fw-bold text-navy mb-0">
+                        <i class="fas fa-chart-pie me-2 text-info"></i>Shortlist Ratio
+                    </h6>
+                    <small class="text-muted">Recruiter pipeline stages</small>
+                </div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <canvas id="pieChart" style="max-height:220px;"></canvas>
+                    <div class="d-flex gap-4 mt-3">
+                        <div class="text-center">
+                            <div class="fw-bold text-success fs-5">{{ shortlisted }}</div>
+                            <small class="text-muted">Selected</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="fw-bold text-danger fs-5">{{ rejected }}</div>
+                            <small class="text-muted">Rejected</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 5 Candidates -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="fw-bold text-navy mb-0">
+                    <i class="fas fa-trophy me-2 text-warning"></i>Top 5 Candidates
+                </h6>
+                <small class="text-muted">Highest match scores across all jobs</small>
+            </div>
+            <a href="/results" class="btn btn-sm btn-outline-navy">View All</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4">Rank</th>
+                            <th>Candidate</th>
+                            <th>Job Applied</th>
+                            <th>Skills</th>
+                            <th>Score</th>
+                            <th>AI / Stage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in top5 %}
+                        <tr class="align-middle">
+                            <td class="px-4">
+                                {% if loop.index == 1 %}<span class="badge bg-warning text-dark">🥇 1st</span>
+                                {% elif loop.index == 2 %}<span class="badge bg-secondary">🥈 2nd</span>
+                                {% elif loop.index == 3 %}<span class="badge bg-warning-subtle text-dark border">🥉 3rd</span>
+                                {% else %}<span class="text-muted">#{{ loop.index }}</span>{% endif %}
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-navy">{{ r.candidate.name }}</div>
+                                <small class="text-muted">{{ r.candidate.email }}</small>
+                            </td>
+                            <td><span class="text-navy small fw-semibold">{{ r.job.title }}</span></td>
+                            <td>
+                                {% set skills = r.candidate.extracted_skills | fromjson if r.candidate.extracted_skills else [] %}
+                                {% for skill in skills[:3] %}
+                                <span class="skill-badge me-1">{{ skill }}</span>
+                                {% endfor %}
+                                {% if skills|length > 3 %}
+                                <span class="text-muted small">+{{ skills|length - 3 }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height:8px;min-width:80px;">
+                                        <div class="progress-bar {% if r.match_score >= 50 %}bg-success{% else %}bg-danger{% endif %}"
+                                            style="width:{{ r.match_score }}%"></div>
+                                    </div>
+                                    <span class="fw-bold small">{{ r.match_score }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {% if r.status == 'Shortlisted' %}bg-success{% else %}bg-danger{% endif %}">
+                                    AI: {{ r.status }}
+                                </span>
+                                <div class="small text-muted mt-1">{{ r.pipeline_status }}</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Jobs Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <h6 class="fw-bold text-navy mb-0">
+                <i class="fas fa-briefcase me-2 text-info"></i>All Job Postings
+            </h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4">Job Title</th>
+                            <th>Status</th>
+                            <th>Required Skills</th>
+                            <th>Applicants</th>
+                            <th>Selected</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in jobs %}
+                        <tr class="align-middle">
+                            <td class="px-4 fw-semibold text-navy">{{ job.title }}</td>
+                            <td>
+                                <span class="badge {% if job.status == 'Open' %}bg-success{% elif job.status == 'Paused' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {{ job.status or 'Open' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% for skill in job.required_skills.split(',')[:4] %}
+                                <span class="skill-badge me-1">{{ skill.strip() }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info-subtle text-info border border-info">
+                                    {{ job.candidates|length }}
+                                </span>
+                            </td>
+                            <td>
+                                {% set short_count = namespace(count=0) %}
+                                {% for mr in job.match_results %}
+                                    {% if mr.pipeline_status in ['Shortlisted', 'Hired'] %}
+                                        {% set short_count.count = short_count.count + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="badge bg-success">{{ short_count.count }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="/recruiter/jobs/{{ job.id }}"
+                                        class="btn btn-sm btn-outline-navy">
+                                        <i class="fas fa-ranking-star me-1"></i>Rank
+                                    </a>
+                                    <a href="/api/download-shortlisted?job_id={{ job.id }}"
+                                        class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-download me-1"></i>CSV
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index:9999">
+    <div id="toastEl" class="toast align-items-center border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="toastBody"></div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+const scoreBins = {{ score_bins }};
+const labels = ['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'];
+
+// Bar Chart
+new Chart(document.getElementById('scoreChart'), {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Candidates',
+            data: scoreBins,
+            backgroundColor: labels.map((_, i) => i >= 5 ? '#28a745cc' : '#dc3545cc'),
+            borderColor: labels.map((_, i) => i >= 5 ? '#28a745' : '#dc3545'),
+            borderWidth: 1,
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {legend: {display: false}},
+        scales: {
+            y: {beginAtZero: true, ticks: {stepSize: 1}},
+            x: {grid: {display: false}}
+        }
+    }
+});
+
+// Pie Chart
+new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Applied', 'Shortlisted', 'Interview', 'Rejected', 'Hired'],
+        datasets: [{
+            data: [
+                {{ stage_counts.get('Applied', 0) }},
+                {{ stage_counts.get('Shortlisted', 0) }},
+                {{ stage_counts.get('Interview', 0) }},
+                {{ stage_counts.get('Rejected', 0) }},
+                {{ stage_counts.get('Hired', 0) }}
+            ],
+            backgroundColor: ['#17a2b8', '#28a745', '#ffc107', '#dc3545', '#6f42c1'],
+            borderWidth: 0,
+            hoverOffset: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {legend: {display: false}}
+    }
+});
+
+function retrainModel() {
+    if (!confirm('Retrain ML model with fresh synthetic data? This may take ~10 seconds.')) return;
+    showToast('Retraining model...', 'info');
+    fetch('/api/retrain', {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) showToast(`Model retrained! Accuracy: ${data.accuracy}%`, 'success');
+        else showToast('Error: ' + data.error, 'danger');
+    });
+}
+</script>
+</body>
+</html>

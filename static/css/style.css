@@ -1,0 +1,265 @@
+/* ===================== ROOT VARIABLES ===================== */
+:root {
+    --navy: #0d1b2a;
+    --navy-light: #1a2f48;
+    --info: #17a2b8;
+    --accent: #00bcd4;
+    --text-navy: #0d1b2a;
+}
+
+/* ===================== GLOBAL ===================== */
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #333;
+}
+
+.auth-page {
+    background:
+        linear-gradient(135deg, rgba(13,27,42,0.96), rgba(23,162,184,0.78)),
+        url('https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1600&q=80');
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+}
+
+.text-navy { color: var(--navy) !important; }
+.bg-navy   { background: var(--navy) !important; }
+
+.btn-navy {
+    background: var(--navy);
+    color: #fff;
+    border: none;
+}
+.btn-navy:hover {
+    background: var(--navy-light);
+    color: #fff;
+}
+.btn-outline-navy {
+    border: 2px solid var(--navy);
+    color: var(--navy);
+    font-weight: 600;
+}
+.btn-outline-navy:hover {
+    background: var(--navy);
+    color: #fff;
+}
+
+/* ===================== HERO ===================== */
+.hero-section {
+    background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 50%, #0d2a3a 100%);
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+}
+
+/* ===================== STATS CARDS (HERO) ===================== */
+.stats-card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s, background 0.2s;
+}
+.stats-card:hover {
+    transform: translateY(-4px);
+    background: rgba(255,255,255,0.14);
+}
+
+/* ===================== FEATURE CARDS ===================== */
+.feature-card {
+    border-radius: 16px;
+    border: 1px solid #e8ecf0;
+    transition: box-shadow 0.2s, transform 0.2s;
+    background: #fff;
+}
+.feature-card:hover {
+    box-shadow: 0 12px 40px rgba(13,27,42,0.12);
+    transform: translateY(-4px);
+}
+.feature-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(23,162,184,0.12);
+}
+
+/* ===================== JOB CARDS ===================== */
+.job-card {
+    border-radius: 16px !important;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.job-card:hover {
+    box-shadow: 0 12px 40px rgba(13,27,42,0.15) !important;
+    transform: translateY(-4px);
+}
+.job-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(23,162,184,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===================== SKILL BADGES ===================== */
+.skill-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(23,162,184,0.12);
+    color: #0a7a8f;
+    border: 1px solid rgba(23,162,184,0.3);
+    white-space: nowrap;
+}
+.skill-badge-more {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #f0f4f8;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+.skill-badge-result {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+    margin-bottom: 4px;
+}
+
+/* ===================== TECH SECTION ===================== */
+.tech-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 8px;
+    border-radius: 12px;
+    transition: background 0.2s;
+}
+.tech-item:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+/* ===================== KPI CARDS ===================== */
+.kpi-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.kpi-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+}
+.kpi-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.kpi-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1;
+}
+.kpi-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 3px;
+}
+
+/* ===================== RESULT SCORE CIRCLE ===================== */
+.score-circle {
+    width: 200px;
+    height: 200px;
+}
+.result-stat {
+    text-align: center;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    min-width: 100px;
+}
+
+/* ===================== UPLOAD ZONE ===================== */
+.upload-zone {
+    background: #f8fafc;
+    border: 2px dashed #bee5eb !important;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    border-radius: 12px;
+}
+.upload-zone:hover {
+    background: #e8f4f8;
+    border-color: #17a2b8 !important;
+}
+
+/* ===================== TABLE ===================== */
+.table thead th {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: none;
+}
+.table tbody td {
+    padding: 14px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f4f8;
+}
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: rgba(23,162,184,0.04); }
+
+/* ===================== NAVBAR ===================== */
+.navbar .nav-link {
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: background 0.15s;
+}
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+    background: rgba(255,255,255,0.12);
+    color: #fff !important;
+}
+
+/* ===================== CARD ===================== */
+.card { border-radius: 16px !important; }
+.card-header { border-radius: 16px 16px 0 0 !important; }
+
+/* ===================== PROGRESS BAR ===================== */
+.progress { border-radius: 10px; }
+.progress-bar { border-radius: 10px; }
+
+/* ===================== SCROLLBAR ===================== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #c1cdd6; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #17a2b8; }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 768px) {
+    .hero-section { min-height: auto; }
+    .kpi-value { font-size: 1.4rem; }
+    .score-circle { width: 160px; height: 160px; }
+}

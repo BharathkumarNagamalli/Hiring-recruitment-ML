@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jobs - HireML</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body style="background:#f0f4f8;">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background:#0d1b2a;">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-4" href="/"><i class="fas fa-brain me-2 text-info"></i>HireML</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto gap-1">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/jobs">Jobs</a></li>
+                <li class="nav-item"><a class="nav-link" href="/interview-prep">Interview Prep</a></li>
+                {% if current_user and current_user.role == 'candidate' %}
+                <li class="nav-item"><a class="nav-link" href="/candidate/dashboard">My Applications</a></li>
+                {% endif %}
+                {% if current_user %}
+                <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold text-navy mb-1"><i class="fas fa-magnifying-glass me-2 text-info"></i>Find Jobs</h2>
+            <p class="text-muted mb-0">Search roles, save jobs, and apply with AI match scoring.</p>
+        </div>
+        {% if current_user and current_user.role == 'recruiter' %}
+        <a href="/recruiter" class="btn btn-navy fw-semibold"><i class="fas fa-plus me-2"></i>Post Job</a>
+        {% endif %}
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="GET" action="/jobs">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-4">
+                        <label class="form-label fw-semibold small">Search</label>
+                        <input type="text" class="form-control" name="q" value="{{ q }}" placeholder="Title, skill, company">
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-semibold small">Location</label>
+                        <input type="text" class="form-control" name="location" value="{{ location }}" list="locations" placeholder="Remote">
+                        <datalist id="locations">
+                            {% for item in locations %}<option value="{{ item }}">{% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-semibold small">Type</label>
+                        <select class="form-select" name="job_type">
+                            <option value="">Any</option>
+                            {% for item in job_types %}
+                            <option value="{{ item }}" {% if job_type == item %}selected{% endif %}>{{ item }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-semibold small">Work Mode</label>
+                        <select class="form-select" name="work_mode">
+                            <option value="">Any</option>
+                            {% for item in work_modes %}
+                            <option value="{{ item }}" {% if work_mode == item %}selected{% endif %}>{{ item }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6 d-flex gap-2">
+                        <button class="btn btn-navy flex-grow-1 fw-semibold"><i class="fas fa-filter me-1"></i>Filter</button>
+                        <a href="/jobs" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for job in jobs %}
+        <div class="col-lg-6">
+            <div class="card job-card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between gap-3 mb-3">
+                        <div>
+                            <h5 class="fw-bold text-navy mb-1">{{ job.title }}</h5>
+                            <div class="text-muted small">
+                                <i class="fas fa-building me-1"></i>{{ job.company_name }}
+                                <span class="mx-2">|</span>
+                                <i class="fas fa-location-dot me-1"></i>{{ job.location }}
+                            </div>
+                        </div>
+                        {% if current_user and current_user.role == 'candidate' %}
+                        <form method="POST" action="/jobs/{{ job.id }}/save">
+                            <button class="btn btn-sm {% if job.id in saved_ids %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                                <i class="fas fa-bookmark"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <span class="badge bg-info-subtle text-info border">{{ job.job_type }}</span>
+                        <span class="badge bg-success-subtle text-success border">{{ job.work_mode }}</span>
+                        <span class="badge bg-secondary-subtle text-secondary border">{{ job.experience_level }}</span>
+                        <span class="badge bg-light text-dark border">{{ job.salary_range }}</span>
+                    </div>
+                    <p class="text-muted small mb-3">{{ job.description[:180] }}{% if job.description|length > 180 %}...{% endif %}</p>
+                    <div class="mb-3">
+                        {% for skill in job.required_skills.split(',')[:6] %}
+                        <span class="skill-badge me-1 mb-1">{{ skill.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/jobs/{{ job.id }}" class="btn btn-outline-navy fw-semibold flex-grow-1">
+                            <i class="fas fa-eye me-2"></i>View Details
+                        </a>
+                        <a href="/apply?job_id={{ job.id }}" class="btn btn-info fw-semibold">
+                            <i class="fas fa-paper-plane me-2"></i>Apply
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                    <h5 class="fw-bold text-navy">No jobs found</h5>
+                    <p class="text-muted">Try another keyword, skill, or location.</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Prep - HireML</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body style="background:#f0f4f8;">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background:#0d1b2a;">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-4" href="/"><i class="fas fa-brain me-2 text-info"></i>HireML</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto gap-1">
+                <li class="nav-item"><a class="nav-link" href="/jobs">Jobs</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/interview-prep">Interview Prep</a></li>
+                {% if current_user and current_user.role == 'candidate' %}
+                <li class="nav-item"><a class="nav-link" href="/candidate/dashboard">My Applications</a></li>
+                {% endif %}
+                {% if current_user %}
+                <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold text-navy mb-1"><i class="fas fa-headset me-2 text-info"></i>AI Interview Preparation</h2>
+            <p class="text-muted mb-0">Generate role-specific questions, skill gaps, and answer strategy.</p>
+        </div>
+        <a href="/jobs" class="btn btn-outline-navy fw-semibold"><i class="fas fa-search me-2"></i>Browse Jobs</a>
+    </div>
+
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header text-white border-0 py-3 px-4" style="background:#0d1b2a;">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-sliders me-2"></i>Preparation Setup</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="/interview-prep">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Select Job</label>
+                            <select class="form-select" name="job_id" required>
+                                <option value="">Choose a role</option>
+                                {% for job in jobs %}
+                                <option value="{{ job.id }}" {% if selected_job and selected_job.id == job.id %}selected{% endif %}>
+                                    {{ job.title }} - {{ job.company_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Resume / Experience Text</label>
+                            <textarea class="form-control" name="resume_text" rows="9" placeholder="Paste resume text for personalized preparation">{{ resume_text }}</textarea>
+                        </div>
+                        <button class="btn btn-navy fw-semibold w-100">
+                            <i class="fas fa-wand-magic-sparkles me-2"></i>Generate Prep Plan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            {% if prep_pack %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="fw-bold text-navy mb-0">{{ prep_pack.job_title }} Prep Plan</h5>
+                    <small class="text-muted">{{ prep_pack.company_name }}</small>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-navy">Technical Questions</h6>
+                            <ol>
+                                {% for question in prep_pack.technical_questions %}
+                                <li class="mb-2">{{ question }}</li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-navy">Behavioral Questions</h6>
+                            <ol>
+                                {% for question in prep_pack.behavioral_questions %}
+                                <li class="mb-2">{{ question }}</li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6 class="fw-bold text-navy">5-Step Practice Plan</h6>
+                    <div class="row g-2">
+                        {% for item in prep_pack.practice_plan %}
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded h-100">{{ item }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="fw-semibold text-success mb-2">Strengths to highlight</div>
+                            {% for skill in prep_pack.matched_skills %}
+                            <span class="skill-badge me-1 mb-1">{{ skill }}</span>
+                            {% else %}
+                            <span class="text-muted small">Add resume text for personalized strengths.</span>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold text-danger mb-2">Topics to revise</div>
+                            {% for skill in prep_pack.missing_skills[:8] %}
+                            <span class="skill-badge-more me-1 mb-1">{{ skill }}</span>
+                            {% else %}
+                            <span class="text-muted small">No major gaps detected.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-navy"><i class="fas fa-comments me-2 text-info"></i>Answer Coach</h5>
+                    <div class="input-group mt-3">
+                        <input type="text" class="form-control" id="coachQuestion" placeholder="Ask: How should I answer a Docker question?">
+                        <button class="btn btn-navy" onclick="askCoach()">Ask</button>
+                    </div>
+                    <div id="coachAnswer" class="alert alert-info border-0 mt-3 d-none"></div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-headset fa-4x text-muted mb-3"></i>
+                    <h5 class="fw-bold text-navy">Generate a focused preparation plan</h5>
+                    <p class="text-muted mb-0">Choose a role and paste resume text to get questions and revision guidance.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+function askCoach() {
+    const question = document.getElementById('coachQuestion').value.trim();
+    if (!question) return;
+    fetch('/api/interview-chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question, job_id: {{ selected_job.id if selected_job else 'null' }}})
+    }).then(r => r.json()).then(data => {
+        const box = document.getElementById('coachAnswer');
+        box.textContent = data.answer || data.error || 'Unable to answer right now.';
+        box.classList.remove('d-none');
+    });
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

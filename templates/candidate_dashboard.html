@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Dashboard - HireML</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body style="background:#f0f4f8;">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background:#0d1b2a;">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-4" href="/"><i class="fas fa-brain me-2 text-info"></i>HireML</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto gap-1">
+                <li class="nav-item"><a class="nav-link" href="/jobs">Jobs</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/candidate/dashboard">My Applications</a></li>
+                <li class="nav-item"><a class="nav-link" href="/candidate/profile">Profile</a></li>
+                <li class="nav-item"><a class="nav-link" href="/interview-prep">Interview Prep</a></li>
+                <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid py-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold text-navy mb-1"><i class="fas fa-user-check me-2 text-info"></i>My Applications</h2>
+            <p class="text-muted mb-0">Track status, score reports, saved jobs, and recommendations.</p>
+        </div>
+        <a href="/jobs" class="btn btn-navy fw-semibold"><i class="fas fa-search me-2"></i>Find Jobs</a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-6"><div class="kpi-card"><div class="kpi-icon bg-info-subtle"><i class="fas fa-file-lines text-info"></i></div><div><div class="kpi-value">{{ results|length }}</div><div class="kpi-label">Applications</div></div></div></div>
+        <div class="col-md-3 col-6"><div class="kpi-card"><div class="kpi-icon bg-success-subtle"><i class="fas fa-check text-success"></i></div><div><div class="kpi-value text-success">{{ results | selectattr('pipeline_status','equalto','Shortlisted') | list | length }}</div><div class="kpi-label">Shortlisted</div></div></div></div>
+        <div class="col-md-3 col-6"><div class="kpi-card"><div class="kpi-icon bg-warning-subtle"><i class="fas fa-comments text-warning"></i></div><div><div class="kpi-value text-warning">{{ results | selectattr('pipeline_status','equalto','Interview') | list | length }}</div><div class="kpi-label">Interview</div></div></div></div>
+        <div class="col-md-3 col-6"><div class="kpi-card"><div class="kpi-icon bg-secondary-subtle"><i class="fas fa-bookmark text-secondary"></i></div><div><div class="kpi-value text-secondary">{{ saved_jobs|length }}</div><div class="kpi-label">Saved Jobs</div></div></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="fw-bold text-navy mb-0"><i class="fas fa-timeline me-2 text-info"></i>Application Tracker</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th class="px-4">Job</th><th>Score</th><th>AI</th><th>Recruiter Stage</th><th>Report</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for r in results %}
+                                <tr>
+                                    <td class="px-4">
+                                        <div class="fw-bold text-navy">{{ r.job.title }}</div>
+                                        <small class="text-muted">{{ r.job.company_name }} | {{ r.job.location }}</small>
+                                    </td>
+                                    <td style="min-width:150px;">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height:9px;">
+                                                <div class="progress-bar {% if r.match_score >= 70 %}bg-success{% elif r.match_score >= 50 %}bg-info{% else %}bg-warning{% endif %}" style="width:{{ r.match_score }}%"></div>
+                                            </div>
+                                            <span class="fw-bold">{{ r.match_score }}%</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge {% if r.status == 'Shortlisted' %}bg-success{% else %}bg-danger{% endif %}">{{ r.status }}</span></td>
+                                    <td><span class="badge bg-info-subtle text-info border">{{ r.pipeline_status }}</span></td>
+                                    <td><a href="/candidate/applications/{{ r.id }}" class="btn btn-sm btn-outline-navy"><i class="fas fa-chart-line me-1"></i>View</a></td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5" class="text-center text-muted py-5">No applications yet. Start by finding a job.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="fw-bold text-navy mb-0"><i class="fas fa-wand-magic-sparkles me-2 text-info"></i>Recommended Jobs</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% for job in recommended_jobs %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="fw-bold text-navy">{{ job.title }}</div>
+                        <small class="text-muted">{{ job.company_name }} | {{ job.location }}</small>
+                        <div class="mt-2"><a href="/jobs/{{ job.id }}" class="btn btn-sm btn-outline-navy">View</a></div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">Add skills/resume in your profile to get recommendations.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="fw-bold text-navy mb-0"><i class="fas fa-bookmark me-2 text-warning"></i>Saved Jobs</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% for saved in saved_jobs %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="fw-bold text-navy">{{ saved.job.title }}</div>
+                        <small class="text-muted">{{ saved.job.company_name }}</small>
+                        <div class="mt-2"><a href="/jobs/{{ saved.job.id }}" class="btn btn-sm btn-outline-navy">Open</a></div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No saved jobs yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

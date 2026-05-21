@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply - HireML</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body style="background:#f0f4f8;">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background:#0d1b2a;">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-4" href="/">
+            <i class="fas fa-brain me-2 text-info"></i>HireML
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto gap-1">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/jobs">Jobs</a></li>
+                <li class="nav-item"><a class="nav-link" href="/recruiter">Recruiter</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/apply">Apply</a></li>
+                <li class="nav-item"><a class="nav-link" href="/interview-prep">Interview Prep</a></li>
+                <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/results">Results</a></li>
+                {% if current_user %}
+                <li class="nav-item"><a class="nav-link" href="{% if current_user.role == 'candidate' %}/candidate/dashboard{% else %}/recruiter{% endif %}">Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-navy">Submit Your Application</h2>
+                <p class="text-muted">Our AI will instantly score your resume against the job requirements</p>
+            </div>
+
+            <!-- Application Form -->
+            <div class="card border-0 shadow-lg" id="applicationForm" style="display:block!important;">
+                <div class="card-header border-0 text-white py-3 px-4" style="background:#0d1b2a;">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-file-alt me-2"></i>Candidate Application Form</h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Personal Info -->
+                    <h6 class="fw-bold text-navy mb-3 border-bottom pb-2">
+                        <i class="fas fa-user me-2 text-info"></i>Personal Information
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="candidateName"
+                                value="{{ current_user.name if current_user and current_user.role == 'candidate' else '' }}"
+                                placeholder="e.g. Bharath Kumar">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="candidateEmail"
+                                value="{{ current_user.email if current_user and current_user.role == 'candidate' else '' }}"
+                                placeholder="e.g. bharath@gmail.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone</label>
+                            <input type="text" class="form-control" id="candidatePhone"
+                                value="{{ current_user.phone if current_user and current_user.role == 'candidate' else '' }}"
+                                placeholder="e.g. +91 98765 43210">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Education</label>
+                            <input type="text" class="form-control" id="candidateEducation"
+                                value="{{ current_user.education if current_user and current_user.role == 'candidate' else '' }}"
+                                placeholder="e.g. B.Tech Computer Science">
+                        </div>
+                    </div>
+
+                    <!-- Job Selection -->
+                    <h6 class="fw-bold text-navy mb-3 border-bottom pb-2">
+                        <i class="fas fa-briefcase me-2 text-info"></i>Job Selection
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Applying For <span class="text-danger">*</span></label>
+                            <select class="form-select" id="jobSelect">
+                                <option value="">-- Select a Job Position --</option>
+                                {% for job in jobs %}
+                                <option value="{{ job.id }}"
+                                    {% if preselected_job == job.id|string %}selected{% endif %}>
+                                    {{ job.title }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Years of Experience</label>
+                            <input type="number" class="form-control" id="experienceYears"
+                                placeholder="e.g. 3" min="0" max="40">
+                        </div>
+                    </div>
+
+                    <!-- Job Preview -->
+                    <div id="jobPreview" class="alert alert-info d-none mb-4">
+                        <h6 class="fw-bold mb-2"><i class="fas fa-info-circle me-2"></i><span id="previewTitle"></span></h6>
+                        <p class="small mb-1" id="previewDesc"></p>
+                        <div id="previewSkills"></div>
+                    </div>
+
+                    <!-- Resume Input -->
+                    <h6 class="fw-bold text-navy mb-3 border-bottom pb-2">
+                        <i class="fas fa-file-upload me-2 text-info"></i>Resume
+                    </h6>
+                    <ul class="nav nav-tabs mb-3" id="resumeTabs">
+                        <li class="nav-item">
+                            <button class="nav-link active" onclick="switchTab('text')">
+                                <i class="fas fa-keyboard me-2"></i>Paste Text
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="switchTab('file')">
+                                <i class="fas fa-file-arrow-up me-2"></i>Upload File
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div id="textTab">
+                        <textarea class="form-control" id="resumeText" rows="8"
+                            placeholder="Paste your resume content here...&#10;&#10;Example:&#10;3 years of experience as Python Backend Developer. Skills: Python, Flask, Django, REST API, SQL, PostgreSQL, Docker, Git. Built scalable microservices and REST APIs. B.Tech Computer Science from JNTU Hyderabad.">{{ current_user.resume_text if current_user and current_user.role == 'candidate' else '' }}</textarea>
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-outline-info btn-sm" onclick="extractKeywords()">
+                                <i class="fas fa-magic me-1"></i>Extract Skills Preview
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="clearText()">
+                                <i class="fas fa-trash me-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="fileTab" class="d-none">
+                        <div class="upload-zone p-4 text-center border-2 border-dashed rounded"
+                            onclick="document.getElementById('resumeFile').click()"
+                            ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-info mb-3"></i>
+                            <p class="fw-semibold text-navy mb-1">Drag & Drop resume here</p>
+                            <p class="text-muted small">PDF, DOCX, or TXT</p>
+                            <input type="file" id="resumeFile" accept=".pdf,.docx,.txt" class="d-none"
+                                onchange="handleFileSelect(this)">
+                        </div>
+                        <div id="fileInfo" class="alert alert-success mt-2 d-none">
+                            <i class="fas fa-file-lines me-2"></i><span id="fileName"></span>
+                        </div>
+                    </div>
+
+                    <!-- Skills Preview -->
+                    <div id="skillsPreview" class="mt-3 d-none">
+                        <label class="form-label fw-semibold text-success">
+                            <i class="fas fa-check-circle me-2"></i>Detected Skills:
+                        </label>
+                        <div id="skillsTags"></div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="btn btn-info btn-lg w-100 fw-bold" onclick="submitApplication()">
+                            <i class="fas fa-rocket me-2"></i>Submit & Analyze with AI
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Card (hidden initially) -->
+            <div class="card border-0 shadow-lg d-none" id="resultCard">
+                <div class="card-body p-5 text-center">
+                    <div id="resultIcon" class="mb-3"></div>
+                    <h3 class="fw-bold" id="resultTitle"></h3>
+                    <p class="text-muted mb-4" id="resultSubtitle"></p>
+
+                    <div class="score-circle mx-auto mb-4">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="100" cy="100" r="85" fill="none" stroke="#e9ecef" stroke-width="12"/>
+                            <circle cx="100" cy="100" r="85" fill="none" id="scoreArc"
+                                stroke="#17a2b8" stroke-width="12"
+                                stroke-dasharray="534" stroke-dashoffset="534"
+                                stroke-linecap="round"
+                                transform="rotate(-90 100 100)"/>
+                            <text x="100" y="95" text-anchor="middle" font-size="32"
+                                font-weight="bold" fill="#0d1b2a" id="scoreText">0%</text>
+                            <text x="100" y="118" text-anchor="middle" font-size="14"
+                                fill="#6c757d">Match Score</text>
+                        </svg>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3 mb-4 flex-wrap">
+                        <div class="result-stat">
+                            <div class="fw-bold text-navy" id="statStatus">-</div>
+                            <small class="text-muted">Decision</small>
+                        </div>
+                        <div class="result-stat">
+                            <div class="fw-bold text-navy" id="statSkillCount">-</div>
+                            <small class="text-muted">Skills Detected</small>
+                        </div>
+                        <div class="result-stat">
+                            <div class="fw-bold text-navy" id="statJob">-</div>
+                            <small class="text-muted">Applied For</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-4" id="resultSkillsSection">
+                        <p class="fw-semibold text-navy mb-2">Your Extracted Skills:</p>
+                        <div id="resultSkillsTags"></div>
+                    </div>
+
+                    <div class="row g-3 mb-4 text-start d-none" id="scoreExplanation">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-success-subtle rounded h-100">
+                                <p class="fw-semibold text-success mb-2">
+                                    <i class="fas fa-check me-2"></i>Matched Skills
+                                </p>
+                                <div id="matchedSkills"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded h-100">
+                                <p class="fw-semibold text-danger mb-2">
+                                    <i class="fas fa-triangle-exclamation me-2"></i>Missing Skills
+                                </p>
+                                <div id="missingSkills"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="/dashboard" class="btn btn-navy fw-semibold">
+                            <i class="fas fa-chart-bar me-2"></i>View Dashboard
+                        </a>
+                        <button class="btn btn-outline-info fw-semibold" onclick="applyAgain()">
+                            <i class="fas fa-redo me-2"></i>Apply Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="d-none position-fixed top-0 start-0 w-100 h-100"
+    style="background:rgba(0,0,0,0.7);z-index:9999;">
+    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-white">
+        <div class="spinner-border text-info mb-3" style="width:3rem;height:3rem;"></div>
+        <h5 id="loadingText">Analyzing your resume with AI...</h5>
+        <p class="text-light small">Running NLP + ML matching engine</p>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index:9998">
+    <div id="toastEl" class="toast align-items-center border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="toastBody"></div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+let activeTab = 'text';
+let uploadedFile = null;
+
+// Preselect job if URL param
+const urlParams = new URLSearchParams(window.location.search);
+const preJobId = urlParams.get('job_id');
+if (preJobId) {
+    document.getElementById('jobSelect').value = preJobId;
+    showJobPreview(preJobId);
+}
+
+document.getElementById('jobSelect').addEventListener('change', function() {
+    showJobPreview(this.value);
+});
+
+function showJobPreview(jobId) {
+    const preview = document.getElementById('jobPreview');
+    if (!jobId) { preview.classList.add('d-none'); return; }
+    fetch('/api/jobs').then(r => r.json()).then(allJobs => {
+        const job = allJobs.find(j => j.id == jobId);
+        if (!job) return;
+        document.getElementById('previewTitle').textContent = job.title;
+        document.getElementById('previewDesc').textContent = job.description.slice(0, 150) + '...';
+        const skills = job.required_skills.split(',').map(s =>
+            `<span class="skill-badge me-1">${s.trim()}</span>`).join('');
+        document.getElementById('previewSkills').innerHTML = skills;
+        preview.classList.remove('d-none');
+    });
+}
+
+function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('textTab').classList.toggle('d-none', tab !== 'text');
+    document.getElementById('fileTab').classList.toggle('d-none', tab !== 'file');
+    document.querySelectorAll('#resumeTabs .nav-link').forEach((el, i) => {
+        el.classList.toggle('active', (i === 0 && tab === 'text') || (i === 1 && tab === 'file'));
+    });
+}
+
+function handleFileSelect(input) {
+    if (input.files[0]) {
+        uploadedFile = input.files[0];
+        if (!['pdf', 'docx', 'txt'].includes(uploadedFile.name.split('.').pop().toLowerCase())) {
+            uploadedFile = null;
+            input.value = '';
+            showToast('Please upload PDF, DOCX, or TXT files only', 'warning');
+            return;
+        }
+        document.getElementById('fileName').textContent = uploadedFile.name;
+        document.getElementById('fileInfo').classList.remove('d-none');
+    }
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && ['pdf', 'docx', 'txt'].includes(file.name.split('.').pop().toLowerCase())) {
+        uploadedFile = file;
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileInfo').classList.remove('d-none');
+    } else {
+        showToast('Please upload PDF, DOCX, or TXT files only', 'warning');
+    }
+}
+
+function extractKeywords() {
+    const text = document.getElementById('resumeText').value.trim();
+    if (!text) { showToast('Please enter resume text first', 'warning'); return; }
+    fetch('/api/extract-keywords', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text})
+    }).then(r => r.json()).then(data => {
+        if (data.skills && data.skills.length > 0) {
+            showSkillsPreview(data.skills, 'skillsTags', 'skillsPreview');
+        } else {
+            showToast('No tech skills detected. Try adding more technical terms.', 'warning');
+        }
+    });
+}
+
+function showSkillsPreview(skills, containerId, sectionId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = skills.map(s =>
+        `<span class="skill-badge-result me-1 mb-1">${s}</span>`).join('');
+    document.getElementById(sectionId).classList.remove('d-none');
+}
+
+function clearText() {
+    document.getElementById('resumeText').value = '';
+    document.getElementById('skillsPreview').classList.add('d-none');
+}
+
+function submitApplication() {
+    const name = document.getElementById('candidateName').value.trim();
+    const email = document.getElementById('candidateEmail').value.trim();
+    const phone = document.getElementById('candidatePhone').value.trim();
+    const education = document.getElementById('candidateEducation').value.trim();
+    const jobId = document.getElementById('jobSelect').value;
+    const expYears = document.getElementById('experienceYears').value || '0';
+
+    if (!name || !email || !jobId) {
+        showToast('Please fill Name, Email, and select a Job', 'danger'); return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('email', email);
+    formData.append('phone', phone);
+    formData.append('education', education);
+    formData.append('job_id', jobId);
+    formData.append('experience_years', expYears);
+
+    if (activeTab === 'text') {
+        const resumeText = document.getElementById('resumeText').value.trim();
+        if (!resumeText) { showToast('Please paste your resume text', 'danger'); return; }
+        formData.append('resume_text', resumeText);
+    } else {
+        if (!uploadedFile) { showToast('Please upload a PDF, DOCX, or TXT file', 'danger'); return; }
+        formData.append('resume_file', uploadedFile);
+    }
+
+    document.getElementById('loadingOverlay').classList.remove('d-none');
+
+    fetch('/apply', {method: 'POST', body: formData})
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('loadingOverlay').classList.add('d-none');
+        if (data.error) { showToast(data.error, 'danger'); return; }
+        showResult(data);
+    })
+    .catch(() => {
+        document.getElementById('loadingOverlay').classList.add('d-none');
+        showToast('Network error. Please try again.', 'danger');
+    });
+}
+
+function showResult(data) {
+    document.getElementById('applicationForm').style.display = 'none';
+    const card = document.getElementById('resultCard');
+    card.classList.remove('d-none');
+
+    const isShortlisted = data.status === 'Shortlisted';
+    document.getElementById('resultIcon').innerHTML = isShortlisted
+        ? '<i class="fas fa-check-circle fa-4x text-success"></i>'
+        : '<i class="fas fa-times-circle fa-4x text-danger"></i>';
+    document.getElementById('resultTitle').textContent = isShortlisted
+        ? '🎉 Congratulations! You\'ve been Shortlisted!'
+        : 'Application Reviewed';
+    document.getElementById('resultSubtitle').textContent = isShortlisted
+        ? `Your profile is a strong match for ${data.job_title}. HR will contact you soon.`
+        : `Your score was below the threshold for ${data.job_title}. Keep improving your skills!`;
+
+    document.getElementById('statStatus').innerHTML = isShortlisted
+        ? '<span class="text-success">Shortlisted ✓</span>'
+        : '<span class="text-danger">Not Selected</span>';
+    document.getElementById('statSkillCount').textContent = data.skills.length + ' skills';
+    document.getElementById('statJob').textContent = data.job_title;
+
+    // Animate score arc
+    const score = data.score;
+    const arc = document.getElementById('scoreArc');
+    const totalDash = 534;
+    const offset = totalDash - (totalDash * score / 100);
+    arc.style.transition = 'stroke-dashoffset 1.5s ease';
+    arc.style.strokeDashoffset = offset;
+    arc.style.stroke = isShortlisted ? '#28a745' : '#dc3545';
+    document.getElementById('scoreText').textContent = score + '%';
+    document.getElementById('scoreText').style.fill = isShortlisted ? '#28a745' : '#dc3545';
+
+    if (data.skills.length > 0) {
+        showSkillsPreview(data.skills, 'resultSkillsTags', 'resultSkillsSection');
+        document.getElementById('resultSkillsSection').classList.remove('d-none');
+    }
+
+    if (data.explanation) {
+        const matched = data.explanation.matched_skills || [];
+        const missing = data.explanation.missing_skills || [];
+        document.getElementById('matchedSkills').innerHTML = matched.length
+            ? matched.map(s => `<span class="skill-badge me-1 mb-1">${s}</span>`).join('')
+            : '<span class="text-muted small">No required skills matched directly.</span>';
+        document.getElementById('missingSkills').innerHTML = missing.length
+            ? missing.map(s => `<span class="skill-badge-more me-1 mb-1">${s}</span>`).join('')
+            : '<span class="text-muted small">No major required skills missing.</span>';
+        document.getElementById('scoreExplanation').classList.remove('d-none');
+    }
+    card.scrollIntoView({behavior: 'smooth'});
+}
+
+function applyAgain() {
+    document.getElementById('applicationForm').style.display = 'block';
+    document.getElementById('resultCard').classList.add('d-none');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>

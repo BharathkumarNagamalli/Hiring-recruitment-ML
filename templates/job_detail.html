@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Ranking - HireML</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body style="background:#f0f4f8;">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background:#0d1b2a;">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-4" href="/">
+            <i class="fas fa-brain me-2 text-info"></i>HireML
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto gap-1">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/jobs">Jobs</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/recruiter">Recruiter</a></li>
+                <li class="nav-item"><a class="nav-link" href="/apply">Apply</a></li>
+                <li class="nav-item"><a class="nav-link" href="/interview-prep">Interview Prep</a></li>
+                <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/results">Results</a></li>
+                <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid py-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold text-navy mb-1">
+                <i class="fas fa-ranking-star me-2 text-info"></i>{{ job.title }}
+            </h2>
+            <p class="text-muted mb-0">Ranked candidates with AI score explanations and recruiter pipeline controls.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/apply?job_id={{ job.id }}" class="btn btn-outline-navy fw-semibold">
+                <i class="fas fa-user-plus me-2"></i>Apply Link
+            </a>
+            <a href="/recruiter/jobs/{{ job.id }}/edit" class="btn btn-outline-secondary fw-semibold">
+                <i class="fas fa-pen me-2"></i>Edit Job
+            </a>
+            <a href="/api/download-shortlisted?job_id={{ job.id }}" class="btn btn-success fw-semibold">
+                <i class="fas fa-download me-2"></i>CSV
+            </a>
+            <a href="/recruiter" class="btn btn-navy fw-semibold">
+                <i class="fas fa-arrow-left me-2"></i>Recruiter
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <h6 class="fw-bold text-navy mb-2">Job Status</h6>
+                            <span class="badge px-3 py-2 {% if job.status == 'Open' %}bg-success{% elif job.status == 'Paused' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                {{ job.status or 'Open' }}
+                            </span>
+                        </div>
+                        <i class="fas fa-briefcase fa-2x text-info"></i>
+                    </div>
+                    <p class="text-muted small mt-3 mb-0">{{ job.description[:220] }}{% if job.description|length > 220 %}...{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="row g-3">
+                <div class="col-6 col-lg-3">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-info-subtle"><i class="fas fa-users text-info"></i></div>
+                        <div>
+                            <div class="kpi-value">{{ results|length }}</div>
+                            <div class="kpi-label">Applicants</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-warning-subtle"><i class="fas fa-comments text-warning"></i></div>
+                        <div>
+                            <div class="kpi-value text-warning">{{ stage_counts.get('Interview', 0) }}</div>
+                            <div class="kpi-label">Interview</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-success-subtle"><i class="fas fa-check text-success"></i></div>
+                        <div>
+                            <div class="kpi-value text-success">{{ stage_counts.get('Shortlisted', 0) + stage_counts.get('Hired', 0) }}</div>
+                            <div class="kpi-label">Selected</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-secondary-subtle"><i class="fas fa-star text-secondary"></i></div>
+                        <div>
+                            <div class="kpi-value text-secondary">{{ avg_score }}%</div>
+                            <div class="kpi-label">Avg Score</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h6 class="fw-bold text-navy mb-3"><i class="fas fa-code me-2 text-info"></i>Required Skills</h6>
+            {% for skill in job.required_skills.split(',') %}
+            <span class="skill-badge me-1 mb-1">{{ skill.strip() }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if results %}
+    <div class="row g-4">
+        {% for r in results %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="row g-4 align-items-start">
+                        <div class="col-lg-3">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="rounded-circle bg-info-subtle d-flex align-items-center justify-content-center flex-shrink-0"
+                                    style="width:48px;height:48px;">
+                                    <i class="fas fa-user text-info"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Rank #{{ loop.index }}</div>
+                                    <h5 class="fw-bold text-navy mb-1">{{ r.candidate.name }}</h5>
+                                    <div class="text-muted small">{{ r.candidate.email }}</div>
+                                    <span class="badge bg-secondary-subtle text-secondary border mt-2">
+                                        {{ r.candidate.experience_years }} yr{{ 's' if r.candidate.experience_years != 1 else '' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2">
+                            <label class="form-label fw-semibold small text-muted">AI Match</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height:10px;">
+                                    <div class="progress-bar {% if r.match_score >= 70 %}bg-success{% elif r.match_score >= 50 %}bg-info{% elif r.match_score >= 30 %}bg-warning{% else %}bg-danger{% endif %}"
+                                        style="width:{{ r.match_score }}%"></div>
+                                </div>
+                                <span class="fw-bold text-navy">{{ r.match_score }}%</span>
+                            </div>
+                            <span class="badge mt-2 {% if r.status == 'Shortlisted' %}bg-success{% else %}bg-danger{% endif %}">
+                                AI: {{ r.status }}
+                            </span>
+                        </div>
+                        <div class="col-lg-4">
+                            <label class="form-label fw-semibold small text-muted">Why This Score</label>
+                            <div class="mb-2">
+                                <span class="fw-semibold text-success small">Matched:</span>
+                                {% for skill in r.explanation.get('matched_skills', [])[:6] %}
+                                <span class="skill-badge me-1 mb-1">{{ skill }}</span>
+                                {% else %}
+                                <span class="text-muted small">None</span>
+                                {% endfor %}
+                            </div>
+                            <div>
+                                <span class="fw-semibold text-danger small">Missing:</span>
+                                {% for skill in r.explanation.get('missing_skills', [])[:6] %}
+                                <span class="skill-badge-more me-1 mb-1">{{ skill }}</span>
+                                {% else %}
+                                <span class="text-muted small">None</span>
+                                {% endfor %}
+                            </div>
+                            <div class="text-muted small mt-2">
+                                Skill match: {{ r.explanation.get('skill_match_percent', 0) }}%
+                                | Experience: {{ r.explanation.get('experience_signal', 'Review') }}
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <form method="POST" action="/recruiter/matches/{{ r.id }}/pipeline">
+                                <label class="form-label fw-semibold small text-muted">Recruiter Stage</label>
+                                <select class="form-select form-select-sm mb-2" name="pipeline_status">
+                                    {% for status in pipeline_statuses %}
+                                    <option value="{{ status }}" {% if r.pipeline_status == status %}selected{% endif %}>{{ status }}</option>
+                                    {% endfor %}
+                                </select>
+                                <textarea class="form-control form-control-sm mb-2" rows="2" name="recruiter_notes"
+                                    placeholder="Recruiter notes">{{ r.recruiter_notes or '' }}</textarea>
+                                <button type="submit" class="btn btn-sm btn-navy w-100">
+                                    <i class="fas fa-save me-1"></i>Save Stage
+                                </button>
+                            </form>
+                            <button class="btn btn-sm btn-outline-info w-100 mt-2" data-bs-toggle="collapse" data-bs-target="#interview{{ r.id }}">
+                                <i class="fas fa-calendar-plus me-1"></i>Schedule Interview
+                            </button>
+                        </div>
+                    </div>
+                    <div class="collapse mt-3" id="interview{{ r.id }}">
+                        <form method="POST" action="/recruiter/matches/{{ r.id }}/interviews" class="border rounded p-3 bg-light">
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control form-control-sm" name="scheduled_at" placeholder="Date/time">
+                                </div>
+                                <div class="col-md-2">
+                                    <select class="form-select form-select-sm" name="mode">
+                                        <option>Video</option>
+                                        <option>Phone</option>
+                                        <option>On-site</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control form-control-sm" name="interviewer" placeholder="Interviewer">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control form-control-sm" name="meeting_link" placeholder="Meeting link">
+                                </div>
+                                <div class="col-md-1">
+                                    <button class="btn btn-sm btn-navy w-100"><i class="fas fa-save"></i></button>
+                                </div>
+                                <div class="col-12">
+                                    <input type="text" class="form-control form-control-sm" name="notes" placeholder="Interview notes">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="mt-3 border rounded p-3 bg-light">
+                        <div class="fw-semibold text-navy mb-2"><i class="fas fa-comments me-2 text-info"></i>Messages</div>
+                        {% for message in r.messages[-3:] %}
+                        <div class="small mb-2">
+                            <strong>{{ message.sender.name if message.sender else message.sender_role|title }}:</strong>
+                            <span class="text-muted">{{ message.body }}</span>
+                        </div>
+                        {% else %}
+                        <div class="text-muted small mb-2">No messages yet.</div>
+                        {% endfor %}
+                        <form method="POST" action="/matches/{{ r.id }}/messages" class="input-group input-group-sm">
+                            <input type="text" class="form-control" name="body" placeholder="Message candidate">
+                            <button class="btn btn-navy"><i class="fas fa-paper-plane"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-user-plus fa-4x text-muted mb-3"></i>
+            <h5 class="fw-bold text-navy">No candidates for this job yet</h5>
+            <p class="text-muted">Share the apply link once this job is open.</p>
+            <a href="/apply?job_id={{ job.id }}" class="btn btn-info fw-semibold">
+                <i class="fas fa-user-plus me-2"></i>Open Apply Link
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
