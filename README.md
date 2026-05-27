@@ -81,12 +81,8 @@ Open `http://localhost:5000` in your browser.
 
 ---
 
-## Deployment on Render
-
-1. Push to GitHub
-2. Go to [render.com](https://render.com) → New Web Service → Connect repo
-3. **Build command:** `pip install -r backend/requirements.txt`
-4. **Start command:** `gunicorn backend.app:app --bind 0.0.0.0:$PORT`
+## Web application link
+https://hiring-recruitment-ml-1.onrender.com/
 
 ---
 
