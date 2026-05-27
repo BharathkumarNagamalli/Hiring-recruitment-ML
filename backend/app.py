@@ -6,9 +6,9 @@ import re
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file, abort, session, flash
 from werkzeug.security import check_password_hash, generate_password_hash
-from models.database import db, Job, Candidate, MatchResult, User, SavedJob, Interview, Message, init_db
-from models.ml_engine import MLEngine
-from utils.nlp_processor import NLPProcessor
+from backend.models.database import db, Job, Candidate, MatchResult, User, SavedJob, Interview, Message, init_db
+from backend.models.ml_engine import MLEngine
+from backend.utils.nlp_processor import NLPProcessor
 import json as json_module
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
