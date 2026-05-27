@@ -270,7 +270,7 @@ def init_db(app, ml_engine):
 
     if not ml_engine.models_exist():
         print("[HireML] Training ML models from scratch...")
-        from utils.data_generator import DataGenerator
+        from backend.utils.data_generator import DataGenerator
         generator = DataGenerator()
         df = generator.generate(1000)
         accuracy = ml_engine.train(df)
@@ -281,7 +281,7 @@ def init_db(app, ml_engine):
 
     if Job.query.count() == 0:
         print("[HireML] Seeding sample jobs and candidates...")
-        from utils.nlp_processor import NLPProcessor
+        from backend.utils.nlp_processor import NLPProcessor
         nlp = NLPProcessor()
         jobs = []
 
